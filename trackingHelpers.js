@@ -10,7 +10,6 @@ async function getDHLTrackingData(trackingNumber, resultsLanguage) {
         }
       }
     );
-    console.log();
 
     const { sendungsdetails } = data.data.sendungen[0];
     const { sendungsnummern, sendungsverlauf, istZugestellt } = sendungsdetails;
@@ -18,14 +17,15 @@ async function getDHLTrackingData(trackingNumber, resultsLanguage) {
       return {
         status: event.status,
         location: event.ort,
-        date: event.datum.slice(0, 10),
+        time: event.datum.slice(0, 10),
         time: event.datum.slice(11, 19)
       };
     });
     const details = {
-      trackingNumber: sendungsnummern,
+      trackingNumber: trackingNumber,
       events,
-      isDelivered: istZugestellt
+      isDelivered: istZugestellt,
+      courier: "DHL"
     };
 
     return details;
@@ -46,20 +46,24 @@ async function getGLSTrackingData(trackingNumber, resultsLanguage) {
       }
     );
     const { history, tuNo, progressBar } = data.data.tuStatus[0];
-    const events = history.map(event => {
-      return {
-        status: event.evtDscr,
-        location: event.address.city,
-        date: event.date,
-        time: event.time
-      };
-    });
+    const events = history
+      .map(event => {
+        return {
+          status: event.evtDscr,
+          location: event.address.city,
+          date: event.date,
+          time: event.time
+        };
+      })
+      .reverse();
+
     const isDelivered = progressBar.statusInfo === "DELIVERED" ? true : false;
 
     const details = {
       trackingNumber: tuNo,
       events,
-      isDelivered
+      isDelivered,
+      courier: "GLS"
     };
     return details;
   } catch (err) {
